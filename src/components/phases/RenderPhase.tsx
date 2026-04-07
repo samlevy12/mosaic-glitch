@@ -433,7 +433,7 @@ export function RenderPhase({
       <label className="w-28 shrink-0">{label}</label>
       <input type="range" min={min} max={max} step={step} value={value}
         onChange={e => onChange(Number(e.target.value))}
-        className="flex-1 accent-[#B98B82]" />
+        className="flex-1 accent-[#00ffa3]" />
       <span className="numeric text-xs w-10 text-right">{value}</span>
     </div>
   )
@@ -460,14 +460,14 @@ export function RenderPhase({
             <button
               onClick={previewFrame}
               disabled={!filteredVideoBlob || rendering}
-              className="flex-1 py-2 text-xs uppercase tracking-wider border border-border hover:border-[#B98B82] hover:text-[#B98B82] disabled:opacity-30 transition-colors"
+              className="flex-1 py-2 text-xs uppercase tracking-wider border border-border hover:border-[#00ffa3] hover:text-[#00ffa3] disabled:opacity-30 transition-colors"
             >
               Preview Frame
             </button>
             <button
               onClick={exportVideo}
               disabled={!filteredVideoBlob || rendering}
-              className="flex-1 py-2 text-xs uppercase tracking-wider bg-[#B98B82] text-white disabled:opacity-30 hover:bg-[#a0786f] transition-colors"
+              className="flex-1 py-2 text-xs uppercase tracking-wider bg-[#00ffa3] text-[#0a0a0a] disabled:opacity-30 hover:bg-[#00cc82] transition-colors"
             >
               {rendering ? 'Rendering...' : 'Export'}
             </button>
@@ -484,7 +484,7 @@ export function RenderPhase({
           {progress && rendering && (
             <div className="space-y-1">
               <div className="w-full bg-border h-1">
-                <div className="h-1 bg-[#B98B82] transition-all" style={{ width: `${Math.round((progress.current / progress.total) * 100)}%` }} />
+                <div className="h-1 bg-[#00ffa3] transition-all" style={{ width: `${Math.round((progress.current / progress.total) * 100)}%` }} />
               </div>
               <p className="caption">
                 {progress.current} / {progress.total} frames — {Math.round((progress.current / progress.total) * 100)}%
@@ -495,7 +495,7 @@ export function RenderPhase({
           {outputUrl && (
             <a
               href={outputUrl}
-              download="emotion-mosaic.mp4"
+              download="mosaic-glitch.mp4"
               className="block text-center py-2 text-xs uppercase tracking-wider border border-[#667761] text-[#667761] hover:bg-[#667761] hover:text-white transition-colors"
             >
               Download MP4
@@ -514,7 +514,7 @@ export function RenderPhase({
                   key={m}
                   onClick={() => onRenderModeChange(m)}
                   className={`flex-1 py-1.5 text-xs border transition-colors ${
-                    renderMode === m ? 'bg-[#B98B82] text-white border-[#B98B82]' : 'border-border text-muted-foreground hover:text-foreground'
+                    renderMode === m ? 'bg-[#00ffa3] text-[#0a0a0a] border-[#00ffa3]' : 'border-border text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   {m}

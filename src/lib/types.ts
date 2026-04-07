@@ -196,4 +196,4 @@ export interface ExportProgress {
 
 // ─── App phase ────────────────────────────────────────────────────────────────
 
-export type AppPhase = 'upload' | 'characters' | 'emotion' | 'images' | 'render' | 'batch'
+export type AppPhase = 'upload' | 'emotion' | 'images' | 'render' | 'batch'

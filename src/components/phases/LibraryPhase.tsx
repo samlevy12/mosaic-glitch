@@ -597,14 +597,14 @@ export function LibraryPhase({ onSendToRender, onLog, onSetActiveProcess }: Libr
         {scanning ? (
           <div className="border border-border p-4 space-y-2">
             <div className="w-full bg-border h-1">
-              <div className="h-1 bg-[#B98B82] transition-all" style={{ width: `${Math.round(scanProgress * 100)}%` }} />
+              <div className="h-1 bg-[#00ffa3] transition-all" style={{ width: `${Math.round(scanProgress * 100)}%` }} />
             </div>
             <p className="caption text-muted-foreground">{scanLabel} — {Math.round(scanProgress * 100)}%</p>
           </div>
         ) : (
           <button
             onClick={handleScanFolder}
-            className="w-full py-2.5 text-xs uppercase tracking-wider border border-border hover:border-[#B98B82] hover:text-[#B98B82] transition-colors"
+            className="w-full py-2.5 text-xs uppercase tracking-wider border border-border hover:border-[#00ffa3] hover:text-[#00ffa3] transition-colors"
           >
             {loaded ? `Rescan (current: ${folderName}/)` : 'Select Folder to Sort'}
           </button>
@@ -715,7 +715,7 @@ export function LibraryPhase({ onSendToRender, onLog, onSetActiveProcess }: Libr
               <button
                 onClick={handleSendToRender}
                 disabled={sending || scanning}
-                className="flex-1 py-2.5 text-xs uppercase tracking-wider bg-[#B98B82] text-white hover:bg-[#a0786f] disabled:opacity-30 transition-colors"
+                className="flex-1 py-2.5 text-xs uppercase tracking-wider bg-[#00ffa3] text-[#0a0a0a] hover:bg-[#00cc82] disabled:opacity-30 transition-colors"
               >
                 {sending ? 'Building cache...' : 'Send to Render →'}
               </button>

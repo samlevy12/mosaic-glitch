@@ -134,7 +134,7 @@ export function ImagesPhase({
       {/* Upload zone */}
       <div className="space-y-4">
         <div
-          className="border-2 border-dashed border-border hover:border-[#B98B82]/50 transition-colors p-8 text-center cursor-pointer"
+          className="border-2 border-dashed border-border hover:border-[#00ffa3]/50 transition-colors p-8 text-center cursor-pointer"
           onClick={() => inputRef.current?.click()}
           onDragOver={e => e.preventDefault()}
           onDrop={e => { e.preventDefault(); handleFiles(e.dataTransfer.files) }}
@@ -208,7 +208,7 @@ export function ImagesPhase({
         <div className="border border-border p-4 space-y-2">
           <p className="text-xs uppercase tracking-wider text-muted-foreground">Analyzing colors...</p>
           <div className="w-full bg-border h-1">
-            <div className="h-1 bg-[#B98B82] transition-all" style={{ width: `${Math.round(analyzeProgress * 100)}%` }} />
+            <div className="h-1 bg-[#00ffa3] transition-all" style={{ width: `${Math.round(analyzeProgress * 100)}%` }} />
           </div>
           <p className="caption">{Math.round(analyzeProgress * analyzeCount)} / {analyzeCount} images</p>
         </div>
@@ -358,7 +358,7 @@ export function ImagesPhase({
         <button
           onClick={onProceed}
           disabled={totalImages === 0 || analyzing}
-          className="flex-1 py-2.5 text-xs uppercase tracking-wider border border-border disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#B98B82] hover:text-white hover:border-[#B98B82] transition-colors"
+          className="flex-1 py-2.5 text-xs uppercase tracking-wider border border-border disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#00ffa3] hover:text-[#0a0a0a] hover:border-[#00ffa3] transition-colors"
         >
           Render Mosaic →
         </button>

@@ -1,15 +1,13 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import type {
-  AppPhase, VideoMetadata, DetectedCharacter, Shot, EmotionFrame,
+  AppPhase, VideoMetadata, EmotionFrame, Shot,
   MosaicSettings, InkSettings, StabilitySettings, ExportSettings, RenderMode,
-  BoundingBox,
 } from './lib/types'
 import type { EmotionBuckets } from './lib/image-color-analyzer'
 import type { ImageAsset } from './lib/types'
 import type { CachedImage } from './lib/renderer'
 
 import { UploadPhase } from './components/phases/UploadPhase'
-import { CharactersPhase } from './components/phases/CharactersPhase'
 import { EmotionPhase } from './components/phases/EmotionPhase'
 import { ImagesPhase } from './components/phases/ImagesPhase'
 import { RenderPhase } from './components/phases/RenderPhase'
@@ -17,19 +15,10 @@ import { BatchPhase } from './components/phases/BatchPhase'
 import { LibraryPhase } from './components/phases/LibraryPhase'
 import { ErrorBoundary } from './components/ErrorBoundary'
 
-import { loadFaceModels, detectCharacters, detectExpressionsForCharacter } from './lib/face-detector'
-import { detectShots, labelShotsWithCharacters, seekTo } from './lib/shot-detector'
-import { transcodeToMp4 } from './lib/stitcher'
 import { analyzeImagePool } from './lib/image-color-analyzer'
 import { buildAutoTimeline } from './lib/emotion-timeline'
 import { extractSceneFeatures } from './lib/emotion-inference'
 import type { SceneFeatures } from './lib/emotion-inference'
-import {
-  mergeCharacters,
-  updateFrameCharacterMap,
-  updateFrameCharacterBoxes,
-  updateFrameCharacterExpressions,
-} from './lib/character-merge'
 
 import { Console } from './components/Console'
 import type { ConsoleEntry } from './components/Console'
@@ -41,37 +30,7 @@ const DEFAULT_INK: InkSettings = { thickness: 1 }
 const DEFAULT_STABILITY: StabilitySettings = { holdFrames: 12, reassignAggression: 22, allowReassign: false, seed: 42, emotionSmoothing: 0.5 }
 const DEFAULT_EXPORT: ExportSettings = { resolution: '1080', fps: 60 }
 
-const PHASE_ORDER: AppPhase[] = ['upload', 'characters', 'emotion', 'images', 'render', 'batch']
-
-/**
- * Computes a per-frame source crop rectangle centered on a single face bounding box.
- * Maintains video aspect ratio and clamps to frame bounds.
- * Returns null if the crop would cover > 90% of the frame.
- */
-function computeFrameCrop(
-  box: BoundingBox,
-  videoW: number,
-  videoH: number
-): { sx: number; sy: number; sw: number; sh: number } | null {
-  const cx = box.x + box.width / 2
-  const cy = box.y + box.height / 2
-
-  let sw = box.width * 3
-  let sh = box.height * 3
-
-  const ar = videoW / videoH
-  if (sw / sh > ar) sh = sw / ar
-  else sw = sh * ar
-
-  if (sw >= videoW * 0.9) return null
-
-  let sx = Math.max(0, Math.min(videoW - sw, cx - sw / 2))
-  let sy = Math.max(0, Math.min(videoH - sh, cy - sh / 2))
-  sw = Math.min(sw, videoW - sx)
-  sh = Math.min(sh, videoH - sy)
-
-  return { sx, sy, sw, sh }
-}
+const PHASE_ORDER: AppPhase[] = ['upload', 'emotion', 'images', 'render', 'batch']
 
 export default function App() {
   // ── Phase ─────────────────────────────────────────────────────────────────
@@ -82,19 +41,7 @@ export default function App() {
   const [videoFile, setVideoFile] = useState<File | null>(null)
   const [videoMetadata, setVideoMetadata] = useState<VideoMetadata | null>(null)
   const [filteredVideoBlob, setFilteredVideoBlob] = useState<Blob | null>(null)
-
-  // ── Characters ────────────────────────────────────────────────────────────
-  const [characters, setCharacters] = useState<DetectedCharacter[]>([])
-  const [frameCharacterMap, setFrameCharacterMap] = useState<Map<number, string[]>>(new Map())
-  const [frameCharacterBoxes, setFrameCharacterBoxes] = useState<Map<number, Map<string, BoundingBox>>>(new Map())
-  const [frameCharacterExpressions, setFrameCharacterExpressions] = useState<Map<number, Map<string, Record<string, number>>>>(new Map())
-  const [mainCharacterId, setMainCharacterId] = useState<string | null>(null)
-  const [shots, setShots] = useState<Shot[]>([])
-  const [filteredShots, setFilteredShots] = useState<Shot[]>([])
-  const [scanning, setScanning] = useState(false)
-  const [scanProgress, setScanProgress] = useState(0)
-  const [scanLabel, setScanLabel] = useState('')
-  const [stitching, setStitching] = useState(false)
+  const [filteredShots] = useState<Shot[]>([])
 
   // ── Emotion ───────────────────────────────────────────────────────────────
   const [emotionMode, setEmotionMode] = useState<'auto' | 'equal'>('equal')
@@ -145,7 +92,6 @@ export default function App() {
   function canNavigateTo(p: AppPhase): boolean {
     const idx = PHASE_ORDER.indexOf(p)
     if (idx <= phaseIndex) return true
-    if (p === 'characters' && !!videoFile) return true
     if (p === 'emotion') return true  // always accessible — user can add video directly here
     if (p === 'images' && !!videoFile) return true
     if (p === 'render' && imageAssets.length > 0) return true
@@ -163,254 +109,12 @@ export default function App() {
     setVideoMetadata(meta)
     log('info', `Video loaded: ${file.name}`)
     log('debug', `${meta.duration.toFixed(1)}s · ${meta.fps} fps · ${meta.width}×${meta.height} · ${(file.size / 1024 / 1024).toFixed(1)} MB`)
-    setCharacters([])
-    setFrameCharacterMap(new Map())
-    setFrameCharacterBoxes(new Map())
-    setFrameCharacterExpressions(new Map())
-    setMainCharacterId(null)
-    setShots([])
-    setFilteredShots([])
-    setFilteredVideoBlob(null)
+    // Video goes straight through — no character isolation
+    setFilteredVideoBlob(new Blob([file], { type: file.type || 'video/mp4' }))
     setEmotionTimeline([])
   }
 
-  // ── Phase 2 handlers ──────────────────────────────────────────────────────
-  const handleScan = useCallback(async () => {
-    if (!videoFile) return
-    setScanning(true)
-    setScanProgress(0)
-    setScanLabel('Loading face models...')
-    setActiveProcess('Face Detection')
-    setMainCharacterId(null)
-    lastPct.current = {}
-
-    log('info', '─── Face Detection ──────────────────────────────────────')
-    log('info', 'Loading face detection models...')
-    try {
-      await loadFaceModels()
-      log('success', 'Face detection models loaded')
-
-      setScanLabel('Scanning frames...')
-      log('info', 'Scanning video for faces at 30fps (960px detection canvas)...')
-      const result = await detectCharacters(videoFile, 30, (p, label) => {
-        setScanProgress(p * 0.8)
-        setScanLabel(label)
-        logProgress('face', 'Face scan', p, label)
-      })
-      setCharacters(result.characters)
-      setFrameCharacterMap(result.frameCharacterMap)
-      setFrameCharacterBoxes(result.frameCharacterBoxes)
-      setFrameCharacterExpressions(result.frameCharacterExpressions)
-      if (result.characters.length > 0) {
-        const main = result.characters.reduce((best, c) => c.frameCount > best.frameCount ? c : best)
-        setMainCharacterId(main.id)
-        log('success', `Found ${result.characters.length} character(s) — auto-selected most prominent as main`)
-      } else {
-        log('success', 'No characters detected')
-      }
-
-      setScanLabel('Detecting shots...')
-      setActiveProcess('Shot Detection')
-      log('info', 'Detecting scene cuts via frame-to-frame pixel difference...')
-      const rawShots = await detectShots(videoFile, 0.15, p => {
-        setScanProgress(0.8 + p * 0.2)
-        logProgress('shots', 'Shot detection', p)
-      })
-      const labeledShots = labelShotsWithCharacters(rawShots, result.frameCharacterMap)
-      setShots(labeledShots)
-      setScanLabel('Done')
-      log('success', `Shot detection complete — ${labeledShots.length} shot(s) identified`)
-    } catch (err) {
-      setScanLabel(`Error: ${err}`)
-      log('error', `Face scan failed: ${String(err)}`)
-    } finally {
-      setScanning(false)
-      setActiveProcess(null)
-    }
-  }, [videoFile, log, logProgress])
-
-  const performStitch = useCallback(async (): Promise<Blob | null> => {
-    if (!videoFile || !mainCharacterId || !videoMetadata) return null
-    setStitching(true)
-    setActiveProcess('Character Cut')
-    lastPct.current = {}
-
-    log('info', '─── Character Cut ────────────────────────────────────────')
-
-    const FPS = 30
-    const totalFrames = Math.floor(videoMetadata.duration * FPS)
-
-    try {
-      // Build filteredShots for emotion timeline alignment
-      const GAP_TOLERANCE = 15
-      const presenceSegments: Shot[] = []
-      let segStart: number | null = null
-      let lastSeenFrame = -1
-      const segOtherChars = new Set<string>()
-
-      for (let f = 0; f <= totalFrames; f++) {
-        const charIds = frameCharacterMap.get(f) ?? []
-        const present = charIds.includes(mainCharacterId)
-        if (present) {
-          if (segStart === null) segStart = f
-          lastSeenFrame = f
-          for (const id of charIds) if (id !== mainCharacterId) segOtherChars.add(id)
-        } else if (segStart !== null && f - lastSeenFrame > GAP_TOLERANCE) {
-          presenceSegments.push({ startFrame: segStart, endFrame: lastSeenFrame, startTime: segStart / FPS, endTime: lastSeenFrame / FPS, characterIds: [mainCharacterId, ...segOtherChars] })
-          segStart = null; lastSeenFrame = -1; segOtherChars.clear()
-        }
-      }
-      if (segStart !== null) {
-        presenceSegments.push({ startFrame: segStart, endFrame: lastSeenFrame, startTime: segStart / FPS, endTime: lastSeenFrame / FPS, characterIds: [mainCharacterId, ...segOtherChars] })
-      }
-
-      if (presenceSegments.length === 0) {
-        log('warning', 'No frames contain main character — cannot produce character cut')
-        return null
-      }
-
-      let offset = 0
-      const remappedShots: Shot[] = presenceSegments.map(shot => {
-        const len = shot.endFrame - shot.startFrame
-        const remapped = { ...shot, startFrame: offset, endFrame: offset + len, startTime: offset / FPS, endTime: (offset + len) / FPS }
-        offset += len + 1
-        return remapped
-      })
-      setFilteredShots(remappedShots)
-
-      const presentFrameCount = presenceSegments.reduce((sum, s) => sum + (s.endFrame - s.startFrame + 1), 0)
-      log('info', `${presenceSegments.length} segment(s) — ${presentFrameCount} frames with main character`)
-
-      const outW = videoMetadata.width
-      const outH = videoMetadata.height
-      const canvas = document.createElement('canvas')
-      canvas.width = outW
-      canvas.height = outH
-      const ctx = canvas.getContext('2d')!
-
-      const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
-        ? 'video/webm;codecs=vp9'
-        : 'video/webm'
-      const stream = canvas.captureStream(0)
-      const canvasTrack = stream.getVideoTracks()[0] as CanvasCaptureMediaStreamTrack
-      const recorder = new MediaRecorder(stream, { mimeType })
-      const chunks: Blob[] = []
-      recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data) }
-      recorder.start(200)
-
-      const srcVideo = document.createElement('video')
-      srcVideo.src = URL.createObjectURL(videoFile)
-      srcVideo.muted = true
-      await new Promise<void>(resolve => { srcVideo.onloadedmetadata = () => resolve() })
-
-      let lastBox: BoundingBox | null = null
-      let framesWritten = 0
-      let zoomedFrames = 0
-
-      for (let f = 0; f < totalFrames; f++) {
-        const charIds = frameCharacterMap.get(f) ?? []
-        if (!charIds.includes(mainCharacterId)) continue
-
-        await seekTo(srcVideo, f / FPS)
-
-        const box = frameCharacterBoxes.get(f)?.get(mainCharacterId) ?? null
-        if (box) lastBox = box
-
-        const hasOthers = charIds.some(id => id !== mainCharacterId)
-
-        if (hasOthers && lastBox) {
-          const crop = computeFrameCrop(lastBox, outW, outH)
-          if (crop) {
-            ctx.drawImage(srcVideo, crop.sx, crop.sy, crop.sw, crop.sh, 0, 0, outW, outH)
-            zoomedFrames++
-          } else {
-            ctx.drawImage(srcVideo, 0, 0, outW, outH)
-          }
-        } else {
-          ctx.drawImage(srcVideo, 0, 0, outW, outH)
-        }
-
-        canvasTrack.requestFrame()
-        framesWritten++
-        setScanProgress(f / totalFrames)
-        logProgress('stitch', 'Character cut', f / totalFrames)
-      }
-
-      recorder.stop()
-      await new Promise<void>(r => { recorder.onstop = () => r() })
-      URL.revokeObjectURL(srcVideo.src)
-
-      const webmBlob = new Blob(chunks, { type: 'video/webm' })
-      log('info', `Canvas render complete — ${framesWritten} frames (${zoomedFrames} zoomed) · ${(webmBlob.size / 1024 / 1024).toFixed(1)} MB WebM`)
-      log('info', 'Transcoding to H.264 MP4 for QuickTime compatibility...')
-      setScanLabel('Transcoding...')
-
-      const blob = await transcodeToMp4(webmBlob, 30, (p, label) => {
-        setScanProgress(p)
-        logProgress('transcode', 'Transcode', p, label)
-      })
-      log('success', `Character cut ready — ${(blob.size / 1024 / 1024).toFixed(1)} MB MP4`)
-      setFilteredVideoBlob(blob)
-      return blob
-    } catch (err) {
-      log('error', `Character cut failed: ${String(err)}`)
-      console.error('Character cut error:', err)
-      return null
-    } finally {
-      setStitching(false)
-      setActiveProcess(null)
-    }
-  }, [videoFile, mainCharacterId, videoMetadata, frameCharacterMap, frameCharacterBoxes, log, logProgress])
-
-  async function handleCharactersProceed() {
-    const blob = filteredVideoBlob ?? await performStitch()
-    if (blob) setPhase('emotion')
-  }
-
-  async function handleStitchAndDownload() {
-    const blob = filteredVideoBlob ?? await performStitch()
-    if (!blob || !videoFile) return
-    const baseName = videoFile.name.replace(/\.[^.]+$/, '')
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${baseName}_character_cut.mp4`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-    log('success', `Downloaded: ${baseName}_character_cut.mp4`)
-  }
-
-  function handleMergeCharacters(indicesToMerge: number[]) {
-    try {
-      const { merged, idMapping } = mergeCharacters(characters, indicesToMerge)
-      const updated = [...characters]
-      updated[indicesToMerge[0]] = merged
-      for (const idx of indicesToMerge.slice(1).sort((a, b) => b - a)) {
-        updated.splice(idx, 1)
-      }
-      setCharacters(updated)
-      setFrameCharacterMap(updateFrameCharacterMap(frameCharacterMap, idMapping))
-      setFrameCharacterBoxes(updateFrameCharacterBoxes(frameCharacterBoxes, idMapping))
-      setFrameCharacterExpressions(updateFrameCharacterExpressions(frameCharacterExpressions, idMapping))
-      const updatedShots = shots.map(shot => ({
-        ...shot,
-        characterIds: shot.characterIds.map(id => idMapping.get(id) ?? id).filter((id, idx, arr) => arr.indexOf(id) === idx),
-      }))
-      setShots(updatedShots)
-      log('info', `Merged ${indicesToMerge.length} character(s) into character ${indicesToMerge[0] + 1}`)
-    } catch (err) {
-      log('error', `Character merge failed: ${String(err)}`)
-    }
-  }
-
-  function handleShotAdjustment(newShots: Shot[]) {
-    setShots(newShots)
-    log('info', `Shot boundaries adjusted — ${newShots.length} shot(s)`)
-  }
-
-  // ── Quick-add video shortcut (skip upload + characters) ─────────────────
+  // ── Quick-add video shortcut (skip upload) ──────────────────────────────
   async function handleAddVideoShortcut() {
     try {
       const [fileHandle] = await (window as any).showOpenFilePicker({
@@ -498,62 +202,25 @@ export default function App() {
         return
       }
 
-      const mainChar = mainCharacterId ? characters.find(c => c.id === mainCharacterId) : null
-      const totalFrames = filteredShots.length > 0
-        ? filteredShots[filteredShots.length - 1].endFrame + 1
-        : (videoMetadata ? Math.floor(videoMetadata.duration * 30) : 1000)
+      const totalFrames = videoMetadata ? Math.floor(videoMetadata.duration * 30) : 1000
       let expressionMap = new Map<number, Record<string, number>>()
-      let useColorFallback = false
-      const filteredDurationSeconds = filteredShots.length > 0
-        ? (filteredShots[filteredShots.length - 1].endFrame + 1) / 30 : 0
 
-      if (mainChar && filteredDurationSeconds < 2) {
-        log('warning', `Filtered video is only ${filteredDurationSeconds.toFixed(1)}s — using color analysis instead.`)
-        useColorFallback = true
-      }
-
-      // ── Scene feature extraction (runs alongside face detection) ───────
+      // ── Scene feature extraction ──────────────────────────────────────
       const sceneFeatureMap = new Map<number, SceneFeatures>()
       const file = new File([filteredVideoBlob], 'filtered.mp4', { type: 'video/mp4' })
 
-      if (mainChar && !useColorFallback) {
-        log('info', `Scanning ${filteredDurationSeconds.toFixed(1)}s filtered video — expressions + scene color...`)
-        try {
-          const exprFrames = await Promise.race([
-            detectExpressionsForCharacter(file, mainChar.descriptor, 0.25, (p, label) => {
-              setAutoProgress(p * 0.7)
-              logProgress('emotion', 'Expression scan', p, label)
-            }),
-            new Promise<Map<number, Record<string, number>>>((_, reject) =>
-              setTimeout(() => reject(new Error('Expression scan timeout after 90s')), 90000)
-            )
-          ])
-          expressionMap = exprFrames
-          if (exprFrames.size === 0) {
-            log('warning', 'Expression scan found no matching frames — using color-based analysis')
-            useColorFallback = true
-          } else {
-            log('success', `Expression scan complete — ${exprFrames.size} frames with face data`)
-          }
-        } catch (err) {
-          log('warning', `Expression scan failed: ${err instanceof Error ? err.message : 'unknown'} — falling back to color analysis`)
-          useColorFallback = true
-        }
-      }
-
-      if (!mainChar || useColorFallback) {
-        log('info', 'Using color-based emotion analysis...')
-        const { analyzeVideoEmotions } = await import('./lib/emotion-color-mapping')
-        const segments = await analyzeVideoEmotions(file, 2, p => {
-          setAutoProgress(p * 0.7)
-          logProgress('emotion', 'Color analysis', p)
-        })
-        for (const seg of segments) {
-          const startF = Math.round(seg.startTime * 30)
-          const endF = Math.round(seg.endTime * 30)
-          for (let f = startF; f < endF; f++) {
-            expressionMap.set(f, { [seg.emotion]: seg.confidence })
-          }
+      // Color-based emotion analysis (no character detection)
+      log('info', 'Using color-based emotion analysis...')
+      const { analyzeVideoEmotions } = await import('./lib/emotion-color-mapping')
+      const segments = await analyzeVideoEmotions(file, 2, p => {
+        setAutoProgress(p * 0.7)
+        logProgress('emotion', 'Color analysis', p)
+      })
+      for (const seg of segments) {
+        const startF = Math.round(seg.startTime * 30)
+        const endF = Math.round(seg.endTime * 30)
+        for (let f = startF; f < endF; f++) {
+          expressionMap.set(f, { [seg.emotion]: seg.confidence })
         }
       }
 
@@ -764,11 +431,9 @@ export default function App() {
 
   // ── Session Save/Load ─────────────────────────────────────────────────────
   function handleSaveSession() {
-    const frameCharacterMapObj: Record<string, string[]> = {}
-    frameCharacterMap.forEach((ids, frame) => { frameCharacterMapObj[String(frame)] = ids })
     const state: SessionState = {
-      phase, characters, mainCharacterId, shots, filteredShots,
-      frameCharacterMap: frameCharacterMapObj,
+      phase, characters: [], mainCharacterId: null, shots: [], filteredShots: [],
+      frameCharacterMap: {},
       emotionMode, emotionTimeline,
       mosaicSettings, inkSettings, stabilitySettings, exportSettings, renderMode,
       imageAssetMeta: imageAssets.map(a => ({
@@ -783,19 +448,12 @@ export default function App() {
   async function handleLoadSession() {
     try {
       const state = await loadSession()
-      setPhase(state.phase); setCharacters(state.characters); setMainCharacterId(state.mainCharacterId)
-      setShots(state.shots); setFilteredShots(state.filteredShots)
+      setPhase(state.phase)
       setEmotionMode(state.emotionMode); setEmotionTimeline(state.emotionTimeline)
-      // manualSegments and smoothing removed — smoothing now only at render time
       setMosaicSettings(state.mosaicSettings); setInkSettings(state.inkSettings)
       setStabilitySettings(state.stabilitySettings); setExportSettings(state.exportSettings)
       setRenderMode(state.renderMode)
-      const restoredMap = new Map<number, string[]>()
-      for (const [key, ids] of Object.entries(state.frameCharacterMap)) {
-        restoredMap.set(Number(key), ids)
-      }
-      setFrameCharacterMap(restoredMap)
-      log('success', `Session loaded — phase: ${state.phase} | characters: ${state.characters.length}`)
+      log('success', `Session loaded — phase: ${state.phase}`)
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       if (!msg.includes('cancelled')) log('error', `Failed to load session: ${msg}`)
@@ -808,13 +466,13 @@ export default function App() {
       {/* Header */}
       <header className="border-b border-border px-6 py-4 flex items-center justify-between shrink-0">
         <div>
-          <h1>emotion mosaic</h1>
-          <p className="caption mt-0.5">face-aware character iso → emotion-driven mosaic composer</p>
+          <h1>MOSAIC GLITCH</h1>
+          <p className="caption mt-0.5">glitch-driven mosaic video composer</p>
         </div>
         <div className="flex items-center gap-3">
           <nav className="flex items-center gap-1">
-            {/* Shared path: upload → characters → emotion */}
-            {(['upload', 'characters', 'emotion'] as const).map((p, i) => {
+            {/* Main path: upload → emotion */}
+            {(['upload', 'emotion'] as const).map((p, i) => {
               const active = phase === p
               const accessible = canNavigateTo(p)
               return (
@@ -824,7 +482,7 @@ export default function App() {
                   disabled={!accessible}
                   className={`px-3 py-1.5 text-xs uppercase tracking-wider border transition-colors ${
                     active && !libraryOpen
-                      ? 'bg-[#B98B82] text-white border-[#B98B82]'
+                      ? 'bg-[#00ffa3] text-[#0a0a0a] border-[#00ffa3]'
                       : accessible
                       ? 'border-border text-muted-foreground hover:text-foreground hover:border-foreground'
                       : 'border-border/30 text-muted-foreground/30 cursor-not-allowed'
@@ -850,13 +508,13 @@ export default function App() {
                     disabled={!accessible}
                     className={`px-3 py-1 text-xs uppercase tracking-wider border transition-colors ${
                       active && !libraryOpen
-                        ? 'bg-[#B98B82] text-white border-[#B98B82]'
+                        ? 'bg-[#00ffa3] text-[#0a0a0a] border-[#00ffa3]'
                         : accessible
                         ? 'border-border text-muted-foreground hover:text-foreground hover:border-foreground'
                         : 'border-border/30 text-muted-foreground/30 cursor-not-allowed'
                     }`}
                   >
-                    <span className="opacity-50 mr-1">{i + 4}</span>{p}
+                    <span className="opacity-50 mr-1">{i + 3}</span>{p}
                   </button>
                 )
               })}
@@ -876,7 +534,7 @@ export default function App() {
                     disabled={!accessible}
                     className={`px-3 py-1 text-xs uppercase tracking-wider border transition-colors ${
                       active && !libraryOpen
-                        ? 'bg-[#37515F] text-white border-[#37515F]'
+                        ? 'bg-[#0d2818] text-[#00ffa3] border-[#0d2818]'
                         : accessible
                         ? 'border-border text-muted-foreground hover:text-foreground hover:border-foreground'
                         : 'border-border/30 text-muted-foreground/30 cursor-not-allowed'
@@ -889,20 +547,11 @@ export default function App() {
             })()}
           </nav>
           <div className="flex gap-1 border-l border-border pl-3">
-            {filteredVideoBlob && (
-              <button
-                onClick={handleStitchAndDownload}
-                className="px-3 py-1.5 text-xs uppercase tracking-wider border border-[#37515F] text-[#37515F] hover:bg-[#37515F] hover:text-white transition-colors"
-                title="Download the character-centered cut"
-              >
-                ↓ Character Cut
-              </button>
-            )}
             <button
               onClick={() => setLibraryOpen(o => !o)}
               className={`px-3 py-1.5 text-xs uppercase tracking-wider border transition-colors ${
                 libraryOpen
-                  ? 'bg-[#37515F] text-white border-[#37515F]'
+                  ? 'bg-[#0d2818] text-[#00ffa3] border-[#0d2818]'
                   : 'border-border text-muted-foreground hover:text-foreground hover:border-foreground'
               }`}
             >
@@ -939,44 +588,17 @@ export default function App() {
             videoFile={videoFile}
             videoMetadata={videoMetadata}
             onVideoSelected={handleVideoSelected}
-            onProceed={() => setPhase('characters')}
-          />
-        )}
-
-        {!libraryOpen && phase === 'characters' && (
-          <CharactersPhase
-            characters={characters}
-            mainCharacterId={mainCharacterId}
-            shots={shots}
-            frameCharacterMap={frameCharacterMap}
-            frameCharacterBoxes={frameCharacterBoxes}
-            videoDurationFrames={videoMetadata ? Math.floor(videoMetadata.duration * 30) : 1000}
-            scanning={scanning}
-            stitching={stitching}
-            scanProgress={scanProgress}
-            scanLabel={scanLabel}
-            videoSrc={filteredVideoBlob ?? videoFile}
-            filteredVideoBlob={filteredVideoBlob}
-            onScan={handleScan}
-            onSelectMainCharacter={setMainCharacterId}
-            onMergeCharacters={handleMergeCharacters}
-            onShotAdjustment={handleShotAdjustment}
-            onStitchAndDownload={handleStitchAndDownload}
-            onProceed={handleCharactersProceed}
+            onProceed={() => setPhase('emotion')}
           />
         )}
 
         {!libraryOpen && phase === 'emotion' && (
           <EmotionPhase
-            duration={
-              filteredShots.length > 0
-                ? (filteredShots[filteredShots.length - 1].endFrame + 1) / 30
-                : (videoMetadata?.duration ?? 0)
-            }
+            duration={videoMetadata?.duration ?? 0}
             fps={videoMetadata?.fps ?? 30}
             emotionMode={emotionMode}
             emotionTimeline={emotionTimeline}
-            shots={shots}
+            shots={[]}
             autoDetecting={autoDetecting}
             autoProgress={autoProgress}
             onModeChange={setEmotionMode}

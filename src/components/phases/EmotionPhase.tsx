@@ -74,7 +74,7 @@ export function EmotionPhase({
         {onAddVideo && !hasVideo && (
           <button
             onClick={onAddVideo}
-            className="shrink-0 ml-4 px-4 py-2 text-xs uppercase tracking-wider border border-border hover:border-[#B98B82] hover:text-[#B98B82] transition-colors"
+            className="shrink-0 ml-4 px-4 py-2 text-xs uppercase tracking-wider border border-border hover:border-[#00ffa3] hover:text-[#00ffa3] transition-colors"
           >
             + Add MP4
           </button>
@@ -94,7 +94,7 @@ export function EmotionPhase({
             onClick={() => onModeChange(mode)}
             className={`flex-1 py-2 text-xs uppercase tracking-wider transition-colors ${
               emotionMode === mode
-                ? 'bg-[#B98B82] text-white border-[#B98B82]'
+                ? 'bg-[#00ffa3] text-[#0a0a0a] border-[#00ffa3]'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
@@ -110,7 +110,7 @@ export function EmotionPhase({
             <div className="border border-border p-4 space-y-2">
               <p className="text-xs uppercase tracking-wider text-muted-foreground">Building emotion timeline...</p>
               <div className="w-full bg-border h-1">
-                <div className="h-1 bg-[#B98B82] transition-all" style={{ width: `${Math.round(autoProgress * 100)}%` }} />
+                <div className="h-1 bg-[#00ffa3] transition-all" style={{ width: `${Math.round(autoProgress * 100)}%` }} />
               </div>
             </div>
           ) : emotionTimeline.length === 0 ? (
@@ -118,7 +118,7 @@ export function EmotionPhase({
               <p className="body-text text-muted-foreground">Divide video into equal emotion sections.</p>
               <button
                 onClick={onDetectEmotions}
-                className="px-6 py-2 text-xs uppercase tracking-wider border border-[#B98B82] text-[#B98B82] hover:bg-[#B98B82] hover:text-white transition-colors"
+                className="px-6 py-2 text-xs uppercase tracking-wider border border-[#00ffa3] text-[#00ffa3] hover:bg-[#00ffa3] hover:text-[#0a0a0a] transition-colors"
               >
                 Build Timeline
               </button>
@@ -151,7 +151,7 @@ export function EmotionPhase({
             <div className="border border-border p-4 space-y-2">
               <p className="text-xs uppercase tracking-wider text-muted-foreground">Detecting emotions...</p>
               <div className="w-full bg-border h-1">
-                <div className="h-1 bg-[#B98B82] transition-all" style={{ width: `${Math.round(autoProgress * 100)}%` }} />
+                <div className="h-1 bg-[#00ffa3] transition-all" style={{ width: `${Math.round(autoProgress * 100)}%` }} />
               </div>
             </div>
           ) : emotionTimeline.length === 0 ? (
@@ -159,7 +159,7 @@ export function EmotionPhase({
               <p className="body-text text-muted-foreground">No emotion data yet.</p>
               <button
                 onClick={onDetectEmotions}
-                className="px-6 py-2 text-xs uppercase tracking-wider border border-[#B98B82] text-[#B98B82] hover:bg-[#B98B82] hover:text-white transition-colors"
+                className="px-6 py-2 text-xs uppercase tracking-wider border border-[#00ffa3] text-[#00ffa3] hover:bg-[#00ffa3] hover:text-[#0a0a0a] transition-colors"
               >
                 Detect Emotions
               </button>
@@ -208,7 +208,7 @@ export function EmotionPhase({
           <button
             onClick={onProceed}
             disabled={!canProceed}
-            className="p-4 text-left border border-border disabled:opacity-30 disabled:cursor-not-allowed hover:border-[#B98B82] hover:bg-[#B98B82]/5 transition-colors space-y-1"
+            className="p-4 text-left border border-border disabled:opacity-30 disabled:cursor-not-allowed hover:border-[#00ffa3] hover:bg-[#00ffa3]/5 transition-colors space-y-1"
           >
             <div className="text-xs font-medium uppercase tracking-wider">Single Render</div>
             <div className="caption text-muted-foreground">Upload one image pool → one mosaic output</div>
@@ -216,7 +216,7 @@ export function EmotionPhase({
           <button
             onClick={onProceedBatch}
             disabled={!canProceed}
-            className="p-4 text-left border border-border disabled:opacity-30 disabled:cursor-not-allowed hover:border-[#37515F] hover:bg-[#37515F]/5 transition-colors space-y-1"
+            className="p-4 text-left border border-border disabled:opacity-30 disabled:cursor-not-allowed hover:border-[#0d2818] hover:bg-[#0d2818]/5 transition-colors space-y-1"
           >
             <div className="text-xs font-medium uppercase tracking-wider">Batch Render</div>
             <div className="caption text-muted-foreground">Pick a folder of subfolders → one output per subfolder</div>

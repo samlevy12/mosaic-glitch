@@ -722,7 +722,7 @@ export function BatchPhase({
       <label className="w-28 shrink-0">{label}</label>
       <input type="range" min={min} max={max} step={step} value={value}
         onChange={e => onChange(Number(e.target.value))}
-        className="flex-1 accent-[#B98B82]" />
+        className="flex-1 accent-[#00ffa3]" />
       <span className="numeric text-xs w-10 text-right">{value}</span>
     </div>
   )
@@ -732,8 +732,8 @@ export function BatchPhase({
   function StatusBadge({ item }: { item: SubfolderItem }) {
     const statusColors: Record<SubfolderStatus, string> = {
       pending: 'text-muted-foreground',
-      scanning: 'text-[#B98B82]',
-      analyzing: 'text-[#B98B82]',
+      scanning: 'text-[#00ffa3]',
+      analyzing: 'text-[#00ffa3]',
       rendering: 'text-[#667761]',
       done: 'text-[#667761]',
       error: 'text-destructive',
@@ -754,7 +754,7 @@ export function BatchPhase({
         {(item.status === 'analyzing' || item.status === 'rendering') && (
           <div className="flex-1 max-w-32 bg-border h-1">
             <div
-              className="h-1 bg-[#B98B82] transition-all"
+              className="h-1 bg-[#00ffa3] transition-all"
               style={{ width: `${Math.round(item.progress * 100)}%` }}
             />
           </div>
@@ -784,7 +784,7 @@ export function BatchPhase({
             <button
               onClick={handlePickFolder}
               disabled={scanning || running}
-              className="flex-1 py-2.5 text-xs uppercase tracking-wider border border-border hover:border-[#B98B82] hover:text-[#B98B82] disabled:opacity-30 transition-colors"
+              className="flex-1 py-2.5 text-xs uppercase tracking-wider border border-border hover:border-[#00ffa3] hover:text-[#00ffa3] disabled:opacity-30 transition-colors"
             >
               {scanning ? 'Scanning folder...' : 'Select Vibes Folder'}
             </button>
@@ -872,7 +872,7 @@ export function BatchPhase({
                     <span>{Math.round(combinedProgress * 100)}%</span>
                   </div>
                   <div className="bg-border h-1">
-                    <div className="h-1 bg-[#B98B82] transition-all" style={{ width: `${Math.round(combinedProgress * 100)}%` }} />
+                    <div className="h-1 bg-[#00ffa3] transition-all" style={{ width: `${Math.round(combinedProgress * 100)}%` }} />
                   </div>
                 </div>
               )}
@@ -892,7 +892,7 @@ export function BatchPhase({
                 <button
                   onClick={handleCombinedRender}
                   disabled={running || !filteredVideoBlob}
-                  className="flex-1 py-2.5 text-xs uppercase tracking-wider bg-[#37515F] text-white disabled:opacity-30 hover:bg-[#2d4450] transition-colors"
+                  className="flex-1 py-2.5 text-xs uppercase tracking-wider bg-[#0d2818] text-[#00ffa3] disabled:opacity-30 hover:bg-[#0a1f14] transition-colors"
                 >
                   {running ? 'Rendering combined...' : `Render Combined (${subfolders.length} emotion${subfolders.length !== 1 ? 's' : ''})`}
                 </button>
@@ -900,7 +900,7 @@ export function BatchPhase({
                 <button
                   onClick={handleStartQueue}
                   disabled={running || !filteredVideoBlob}
-                  className="flex-1 py-2.5 text-xs uppercase tracking-wider bg-[#B98B82] text-white disabled:opacity-30 hover:bg-[#a0786f] transition-colors"
+                  className="flex-1 py-2.5 text-xs uppercase tracking-wider bg-[#00ffa3] text-[#0a0a0a] disabled:opacity-30 hover:bg-[#00cc82] transition-colors"
                 >
                   {running
                     ? `Rendering ${subfolders.filter(s => s.status === 'rendering').map(s => s.name).join(', ')}...`
@@ -955,7 +955,7 @@ export function BatchPhase({
                   onClick={() => setRenderStyle(s)}
                   disabled={running}
                   className={`flex-1 py-1.5 text-xs border transition-colors ${
-                    renderStyle === s ? 'bg-[#37515F] text-white border-[#37515F]' : 'border-border text-muted-foreground hover:text-foreground'
+                    renderStyle === s ? 'bg-[#0d2818] text-[#00ffa3] border-[#0d2818]' : 'border-border text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   {s === 'combined' ? 'Combined' : 'Separate'}
@@ -979,7 +979,7 @@ export function BatchPhase({
                   key={m}
                   onClick={() => setAssignMode(m)}
                   className={`flex-1 py-1.5 text-xs border transition-colors ${
-                    assignMode === m ? 'bg-[#B98B82] text-white border-[#B98B82]' : 'border-border text-muted-foreground hover:text-foreground'
+                    assignMode === m ? 'bg-[#00ffa3] text-[#0a0a0a] border-[#00ffa3]' : 'border-border text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   {m === 'section' ? 'Section Assign' : 'Color Match'}
@@ -1003,7 +1003,7 @@ export function BatchPhase({
                   key={m}
                   onClick={() => onRenderModeChange(m)}
                   className={`flex-1 py-1.5 text-xs border transition-colors ${
-                    renderMode === m ? 'bg-[#B98B82] text-white border-[#B98B82]' : 'border-border text-muted-foreground hover:text-foreground'
+                    renderMode === m ? 'bg-[#00ffa3] text-[#0a0a0a] border-[#00ffa3]' : 'border-border text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   {m}

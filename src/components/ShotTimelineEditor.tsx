@@ -10,7 +10,7 @@ interface ShotTimelineEditorProps {
   onSave: (shots: Shot[]) => void
 }
 
-const COLORS = ['#B98B82', '#667761', '#8B7355', '#6B8E7F', '#9B7B6A']
+const COLORS = ['#00ffa3', '#667761', '#8B7355', '#6B8E7F', '#9B7B6A']
 
 export function ShotTimelineEditor({
   shots,

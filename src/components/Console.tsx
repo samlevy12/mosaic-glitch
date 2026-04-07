@@ -33,32 +33,32 @@ export function Console({ entries, isExpanded, activeProcess, onToggle, onClear 
 
   const getLevelColor = (level: ConsoleEntry['level']) => {
     switch (level) {
-      case 'info':    return 'text-[#37515F]'
-      case 'success': return 'text-[#667761]'
-      case 'warning': return 'text-[#B98B82]'
+      case 'info':    return 'text-[#00ffa3]'
+      case 'success': return 'text-[#00cc82]'
+      case 'warning': return 'text-[#00ffa3]'
       case 'error':   return 'text-[#E4959E]'
-      case 'debug':   return 'text-[#545E56]'
+      case 'debug':   return 'text-[#555555]'
     }
   }
 
   const lastEntry = entries.length > 0 ? entries[entries.length - 1] : null
 
   return (
-    <div className="border-t border-[#545E56] bg-[#FFF9F5]">
+    <div className="border-t border-[#555555] bg-[#0a0a0a]">
       {/* Header bar — always visible */}
       <div
-        className="flex items-center justify-between px-4 py-2 cursor-pointer select-none hover:bg-[#EAE1DF] transition-colors"
+        className="flex items-center justify-between px-4 py-2 cursor-pointer select-none hover:bg-[#111111] transition-colors"
         onClick={onToggle}
       >
         <div className="flex items-center gap-3 min-w-0 flex-1">
           {isExpanded ? <CaretDown size={14} /> : <CaretUp size={14} />}
-          <span className="text-xs uppercase tracking-wider text-[#1F0812] shrink-0">Console</span>
-          <span className="text-xs text-[#545E56] shrink-0">({entries.length})</span>
+          <span className="text-xs uppercase tracking-wider text-[#e0e0e0] shrink-0">Console</span>
+          <span className="text-xs text-[#555555] shrink-0">({entries.length})</span>
 
           {/* Active process indicator */}
           {activeProcess && (
-            <span className="flex items-center gap-1.5 text-xs text-[#B98B82] shrink-0">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#B98B82] animate-pulse inline-block" />
+            <span className="flex items-center gap-1.5 text-xs text-[#00ffa3] shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#00ffa3] animate-pulse inline-block" />
               {activeProcess}
             </span>
           )}
@@ -70,12 +70,12 @@ export function Console({ entries, isExpanded, activeProcess, onToggle, onClear 
             </span>
           )}
           {!isExpanded && activeProcess && lastEntry && (
-            <span className="text-xs text-[#545E56] truncate min-w-0">
+            <span className="text-xs text-[#555555] truncate min-w-0">
               {lastEntry.message}
             </span>
           )}
           {!isExpanded && !lastEntry && (
-            <span className="text-xs text-[#545E56]/50">Idle — waiting for processes</span>
+            <span className="text-xs text-[#555555]/50">Idle — waiting for processes</span>
           )}
         </div>
 
@@ -93,17 +93,17 @@ export function Console({ entries, isExpanded, activeProcess, onToggle, onClear 
       {isExpanded && (
         <div
           ref={scrollRef}
-          className="h-52 overflow-y-auto border-t border-[#545E56]/30"
+          className="h-52 overflow-y-auto border-t border-[#555555]/30"
         >
           <div className="p-3 space-y-0.5 font-mono text-xs">
             {entries.length === 0 ? (
-              <div className="text-center py-8 text-[#545E56]/50 text-xs">
+              <div className="text-center py-8 text-[#555555]/50 text-xs">
                 No entries yet — processes will report here
               </div>
             ) : (
               entries.map((entry, i) => (
                 <div key={i} className="flex gap-2 items-start leading-relaxed">
-                  <span className="text-[#545E56]/60 shrink-0 tabular-nums text-[10px] pt-px">
+                  <span className="text-[#555555]/60 shrink-0 tabular-nums text-[10px] pt-px">
                     {formatTime(entry.timestamp)}
                   </span>
                   <span className={`shrink-0 w-[52px] text-[10px] uppercase tabular-nums ${getLevelColor(entry.level)}`}>
@@ -113,7 +113,7 @@ export function Console({ entries, isExpanded, activeProcess, onToggle, onClear 
                     {entry.message}
                   </span>
                   {entry.data != null && (
-                    <span className="text-[#545E56] text-[10px] shrink-0 ml-2">
+                    <span className="text-[#555555] text-[10px] shrink-0 ml-2">
                       {typeof entry.data === 'object' ? JSON.stringify(entry.data) : String(entry.data)}
                     </span>
                   )}

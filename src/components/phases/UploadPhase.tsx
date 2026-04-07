@@ -56,7 +56,7 @@ export function UploadPhase({ videoFile, videoMetadata, onVideoSelected, onProce
       {/* Drop zone */}
       <div
         className={`border-2 border-dashed transition-colors rounded-none p-12 text-center cursor-pointer ${
-          dragging ? 'border-[#B98B82] bg-[#B98B82]/5' : 'border-border hover:border-[#B98B82]/50'
+          dragging ? 'border-[#00ffa3] bg-[#00ffa3]/5' : 'border-border hover:border-[#00ffa3]/50'
         }`}
         onDragOver={e => { e.preventDefault(); setDragging(true) }}
         onDragLeave={() => setDragging(false)}
@@ -117,7 +117,7 @@ export function UploadPhase({ videoFile, videoMetadata, onVideoSelected, onProce
       <button
         onClick={onProceed}
         disabled={!videoFile}
-        className="w-full py-2.5 text-xs uppercase tracking-wider border border-border disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#B98B82] hover:text-white hover:border-[#B98B82] transition-colors"
+        className="w-full py-2.5 text-xs uppercase tracking-wider border border-border disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#00ffa3] hover:text-[#0a0a0a] hover:border-[#00ffa3] transition-colors"
       >
         Scan for Characters →
       </button>

@@ -8,25 +8,25 @@
 }
 
 :root {
-  --background: oklch(0.99 0.01 60);
-  --foreground: oklch(0.15 0.02 0);
-  --card: oklch(0.94 0.01 45);
-  --card-foreground: oklch(0.15 0.02 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.15 0.02 0);
-  --primary: oklch(0.62 0.05 30);
-  --primary-foreground: oklch(0.99 0.01 60);
-  --secondary: oklch(0.94 0.01 45);
-  --secondary-foreground: oklch(0.15 0.02 0);
-  --muted: oklch(0.94 0.01 45);
-  --muted-foreground: oklch(0.45 0.01 145);
-  --accent: oklch(0.62 0.05 30);
-  --accent-foreground: oklch(0.99 0.01 60);
+  --background: #0a0a0a;
+  --foreground: #e0e0e0;
+  --card: #111111;
+  --card-foreground: #e0e0e0;
+  --popover: #111111;
+  --popover-foreground: #e0e0e0;
+  --primary: #00ffa3;
+  --primary-foreground: #0a0a0a;
+  --secondary: #161616;
+  --secondary-foreground: #e0e0e0;
+  --muted: #161616;
+  --muted-foreground: #666666;
+  --accent: #00ffa3;
+  --accent-foreground: #0a0a0a;
   --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.99 0.01 60);
-  --border: oklch(0.45 0.01 145);
-  --input: oklch(0.45 0.01 145);
-  --ring: oklch(0.62 0.05 30);
+  --destructive-foreground: #e0e0e0;
+  --border: #222222;
+  --input: #222222;
+  --ring: #00ffa3;
   --radius: 0rem;
 }
 
@@ -63,17 +63,18 @@
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  background-color: #FFF9F5;
-  color: #1F0812;
+  background-color: #0a0a0a;
+  color: #e0e0e0;
 }
 
 h1 {
-  font-family: 'Times New Roman', Times, serif;
-  font-style: italic;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-style: normal;
+  font-weight: 700;
   font-size: 32px;
   line-height: 1.2;
-  letter-spacing: 0.02em;
-  color: #1F0812;
+  letter-spacing: 0.05em;
+  color: #00ffa3;
 }
 
 h2 {
@@ -82,7 +83,7 @@ h2 {
   font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #1F0812;
+  color: #e0e0e0;
 }
 
 label {
@@ -91,7 +92,7 @@ label {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  color: #545E56;
+  color: #00ffa3;
 }
 
 .body-text {
@@ -99,7 +100,7 @@ label {
   font-weight: 400;
   font-size: 14px;
   line-height: 1.5;
-  color: #1F0812;
+  color: #e0e0e0;
 }
 
 .caption {
@@ -107,11 +108,11 @@ label {
   font-weight: 400;
   font-size: 11px;
   line-height: 1.4;
-  color: #545E56;
+  color: #555555;
 }
 
 .numeric {
   font-family: 'Source Code Pro', 'SF Mono', 'Courier New', monospace;
   font-size: 12px;
-  color: #1F0812;
+  color: #e0e0e0;
 }

@@ -13,7 +13,7 @@ const EMOTION_COLORS: Record<string, string> = EMOTION_COLOR_MAPPINGS.reduce(
 )
 
 // Character colors for bounding boxes
-const CHAR_COLORS = ['#B98B82', '#667761', '#37515F', '#9E8B88', '#C5B4A0', '#88A0A8']
+const CHAR_COLORS = ['#00ffa3', '#667761', '#0d2818', '#9E8B88', '#C5B4A0', '#88A0A8']
 
 interface VideoPreviewProps {
   // Video source — either a File/Blob or an object URL
@@ -269,7 +269,7 @@ export function VideoPreview({
               style={{
                 left: `${(shot.startFrame / (shots[shots.length - 1]?.endFrame || 1)) * 100}%`,
                 width: `${((shot.endFrame - shot.startFrame) / (shots[shots.length - 1]?.endFrame || 1)) * 100}%`,
-                backgroundColor: i % 2 === 0 ? '#37515F40' : '#B98B8240',
+                backgroundColor: i % 2 === 0 ? '#0d281840' : '#00ffa340',
               }}
             />
           ))}

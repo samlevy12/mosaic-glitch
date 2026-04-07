@@ -62,11 +62,11 @@ export async function exportCharacterMap(
   const ctx = canvas.getContext('2d')!
 
   // Background
-  ctx.fillStyle = '#FFF9F5'
+  ctx.fillStyle = '#0a0a0a'
   ctx.fillRect(0, 0, canvasW, canvasH)
 
   // Title
-  ctx.fillStyle = '#1F0812'
+  ctx.fillStyle = '#e0e0e0'
   ctx.font = '13px monospace'
   ctx.fillText('CHARACTERS', PADDING, PADDING + 12)
 
@@ -124,7 +124,7 @@ export async function exportCharacterMap(
     }
 
     // Label: character ID and frame count
-    ctx.fillStyle = '#1F0812'
+    ctx.fillStyle = '#e0e0e0'
     ctx.font = 'bold 11px monospace'
     ctx.fillText(char.id.slice(0, 8), x, y + THUMB + 14)
     ctx.fillStyle = '#545E56'
@@ -139,7 +139,7 @@ export async function exportCharacterMap(
   const timelineW = canvasW - PADDING * 2
   const timelineH = 40
   const totalFrames = Math.floor(videoDuration * fps)
-  const charColors = ['#B98B82', '#667761', '#37515F', '#9E8B88', '#C5B4A0', '#8B9E8B']
+  const charColors = ['#00ffa3', '#667761', '#0d2818', '#9E8B88', '#C5B4A0', '#8B9E8B']
 
   ctx.fillStyle = '#EAE1DF'
   ctx.fillRect(PADDING, timelineY, timelineW, timelineH)
@@ -147,7 +147,7 @@ export async function exportCharacterMap(
   // Draw shot boundaries
   for (const shot of shots) {
     const sx = PADDING + (shot.startFrame / totalFrames) * timelineW
-    ctx.strokeStyle = '#1F081240'
+    ctx.strokeStyle = '#e0e0e040'
     ctx.lineWidth = 1
     ctx.beginPath()
     ctx.moveTo(sx, timelineY)
@@ -174,7 +174,7 @@ export async function exportCharacterMap(
   ctx.font = '9px monospace'
   ctx.fillText('CHARACTER TIMELINE', PADDING, timelineY + timelineH + 12)
 
-  downloadCanvas(canvas, 'emotion-mosaic-characters.png')
+  downloadCanvas(canvas, 'mosaic-glitch-characters.png')
 }
 
 // ── Phase 3: Emotion Timeline ────────────────────────────────────────────────
@@ -200,7 +200,7 @@ export function exportEmotionTimeline(
   const ctx = canvas.getContext('2d')!
 
   // Background
-  ctx.fillStyle = '#FFF9F5'
+  ctx.fillStyle = '#0a0a0a'
   ctx.fillRect(0, 0, W, H)
 
   // Draw each frame as a vertical slice
@@ -218,7 +218,7 @@ export function exportEmotionTimeline(
   ctx.globalAlpha = 1
 
   // Shot boundary lines
-  ctx.strokeStyle = '#1F081260'
+  ctx.strokeStyle = '#e0e0e060'
   ctx.lineWidth = 1.5
   for (const shot of shots) {
     const x = (shot.startFrame / totalFrames) * W
@@ -229,9 +229,9 @@ export function exportEmotionTimeline(
   }
 
   // Title bar over the strip
-  ctx.fillStyle = '#1F081288'
+  ctx.fillStyle = '#e0e0e088'
   ctx.fillRect(0, 0, W, 20)
-  ctx.fillStyle = '#FFF9F5'
+  ctx.fillStyle = '#0a0a0a'
   ctx.font = '11px monospace'
   ctx.fillText(`EMOTION TIMELINE  ·  ${duration.toFixed(1)}s  ·  ${totalFrames} frames  ·  ${shots.length} shots`, 12, 14)
 
@@ -242,7 +242,7 @@ export function exportEmotionTimeline(
   const cellW = W / cols
   const cellH = 36
 
-  ctx.fillStyle = '#1F0812'
+  ctx.fillStyle = '#e0e0e0'
   ctx.font = 'bold 11px monospace'
   ctx.fillText('EMOTIONS IN THIS VIDEO', 12, legendY - 6)
 
@@ -262,7 +262,7 @@ export function exportEmotionTimeline(
     ctx.fillRect(ex, ey, 20, 20)
 
     // Label
-    ctx.fillStyle = '#1F0812'
+    ctx.fillStyle = '#e0e0e0'
     ctx.font = 'bold 11px monospace'
     ctx.fillText(meta?.displayName ?? emotion, ex + 28, ey + 10)
     ctx.fillStyle = '#545E56'
@@ -270,7 +270,7 @@ export function exportEmotionTimeline(
     ctx.fillText(`${pct}%  (${count} frames)`, ex + 28, ey + 23)
   })
 
-  downloadCanvas(canvas, 'emotion-mosaic-emotion-timeline.png')
+  downloadCanvas(canvas, 'mosaic-glitch-emotion-timeline.png')
 }
 
 // ── Phase 4/5: Image Library / Buckets ──────────────────────────────────────
@@ -298,11 +298,11 @@ export async function exportBucketBreakdown(
   canvas.height = H
   const ctx = canvas.getContext('2d')!
 
-  ctx.fillStyle = '#FFF9F5'
+  ctx.fillStyle = '#0a0a0a'
   ctx.fillRect(0, 0, W, H)
 
   // Title
-  ctx.fillStyle = '#1F0812'
+  ctx.fillStyle = '#e0e0e0'
   ctx.font = 'bold 12px monospace'
   ctx.fillText(`COLOR BUCKETS  ·  ${totalAnalyzed} images analyzed`, PADDING, PADDING)
 
@@ -319,7 +319,7 @@ export async function exportBucketBreakdown(
     ctx.fillRect(PADDING, y + 8, 16, 16)
 
     // Label
-    ctx.fillStyle = '#1F0812'
+    ctx.fillStyle = '#e0e0e0'
     ctx.font = 'bold 11px monospace'
     ctx.fillText(meta?.displayName ?? emotion, PADDING + 24, y + 16)
     ctx.fillStyle = '#545E56'
@@ -357,5 +357,5 @@ export async function exportBucketBreakdown(
     }
   }
 
-  downloadCanvas(canvas, 'emotion-mosaic-color-buckets.png')
+  downloadCanvas(canvas, 'mosaic-glitch-color-buckets.png')
 }
